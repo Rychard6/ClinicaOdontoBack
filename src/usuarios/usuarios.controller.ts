@@ -9,14 +9,11 @@ import {
 } from '@nestjs/common';
 import { UsuariosService } from './usuarios.service';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/prisma.service';
 
-@Controller('usuarios') // Define a rota base como /usuarios
+@Controller('usuarios')
 export class UsuariosController {
   constructor(private readonly usuariosService: UsuariosService) {}
 
-  // Endpoint para criar um novo usuário
   @Post()
   async create(@Body() createUsuarioDto: CreateUsuarioDto) {
     try {
@@ -33,19 +30,31 @@ export class UsuariosController {
     }
   }
 
-  // Endpoint para listar todos os usuários
+  @Post('login')
+  async login(@Body() body: { email: string; senha: string }) {
+    try {
+      const token = await this.usuariosService.validateUser(
+        body.email,
+        body.senha,
+      );
+      return token;
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.UNAUTHORIZED);
+    }
+  }
+
   @Get()
   async findAll() {
     return this.usuariosService.findAll();
   }
 
-  // Endpoint para buscar um usuário específico pelo ID
   @Get(':id')
-  async findOne(@Param('id') id: string) {
+async findOne(@Param('id') id: string) {
+  try {
     const user = await this.usuariosService.findOne(Number(id));
-    if (!user) {
-      throw new HttpException('Usuário não encontrado.', HttpStatus.NOT_FOUND);
-    }
     return user;
+  } catch (error) {
+    throw new HttpException('Usuário não encontrado.', HttpStatus.NOT_FOUND);
   }
+}
 }
