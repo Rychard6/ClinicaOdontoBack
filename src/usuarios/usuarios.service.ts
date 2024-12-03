@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import * as bcrypt from 'bcrypt';
@@ -16,39 +16,44 @@ export class UsuariosService {
   }
 
   async findOne(id: number) {
+    if (isNaN(id)) {
+      throw new BadRequestException('ID inválido.');
+    }
+  
     const user = await this.prisma.usuario.findUnique({
       where: { id },
       include: {
         consultas: {
           include: {
-            dentista: true, // Inclui informações do dentista, se houver
+            dentista: true,
           },
         },
       },
     });
   
     if (!user) {
-      throw new Error('Usuário não encontrado');
+      throw new NotFoundException('Usuário não encontrado');
     }
   
     return {
       id: user.id,
       name: user.nome,
       email: user.email,
-      phone: null,
-      registrationDate: user.criadoEm,
-      upcomingAppointments: user.consultas?.filter((consulta) => consulta.status === 'PENDENTE').map((consulta) => ({
+      phone: user.telefone || null,
+      registrationDate: user.criadoEm.toISOString(),
+      upcomingAppointments: user.consultas?.filter(consulta => consulta.status === 'PENDENTE').map(consulta => ({
         date: consulta.data,
         time: consulta.data ? new Date(consulta.data).toLocaleTimeString() : null,
         specialty: consulta.descricao,
         notes: consulta.status,
       })) || [],
-      pastAppointments: user.consultas?.filter((consulta) => consulta.status === 'CONCLUIDA').map((consulta) => ({
+      pastAppointments: user.consultas?.filter(consulta => consulta.status === 'CONCLUIDA').map(consulta => ({
         date: consulta.data,
         specialty: consulta.descricao,
       })) || [],
-    };    
+    };
   }
+  
   
   async findByEmail(email: string) {
     return this.prisma.usuario.findUnique({

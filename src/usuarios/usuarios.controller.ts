@@ -9,6 +9,9 @@ import {
 } from '@nestjs/common';
 import { UsuariosService } from './usuarios.service';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
+import { UseGuards } from '@nestjs/common';
+import { AuthGuard } from './auth.guard';
+
 
 @Controller('usuarios')
 export class UsuariosController {
@@ -33,11 +36,15 @@ export class UsuariosController {
   @Post('login')
   async login(@Body() body: { email: string; senha: string }) {
     try {
-      const token = await this.usuariosService.validateUser(
+      const { access_token, user } = await this.usuariosService.validateUser(
         body.email,
         body.senha,
       );
-      return token;
+      return {
+        message: 'Login realizado com sucesso.',
+        token: access_token, // Retorna o token JWT
+        user, // Informações básicas do usuário
+      };
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.UNAUTHORIZED);
     }
