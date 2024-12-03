@@ -6,11 +6,14 @@ import {
   Param,
   HttpException,
   HttpStatus,
+  Patch,
 } from '@nestjs/common';
 import { UsuariosService } from './usuarios.service';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UseGuards } from '@nestjs/common';
 import { AuthGuard } from './auth.guard';
+import { UpdateUsuarioDto } from './dto/update-usuario.dto';
+import { Papel } from '@prisma/client';
 
 
 @Controller('usuarios')
@@ -64,4 +67,30 @@ async findOne(@Param('id') id: string) {
     throw new HttpException('Usuário não encontrado.', HttpStatus.NOT_FOUND);
   }
 }
+
+//update
+@Patch(':id')
+async update(
+  @Param('id') id: string,
+  @Body() updateUsuarioDto: UpdateUsuarioDto,
+) {
+  try {
+    const updatedUser = await this.usuariosService.update(Number(id), updateUsuarioDto);
+    return {
+      message: 'Usuário atualizado com sucesso!',
+      data: updatedUser,
+    };
+  } catch (error) {
+    throw new HttpException(
+      error.message || 'Erro ao atualizar usuário.',
+      error.status || HttpStatus.BAD_REQUEST,
+    );
+  }
+}
+
+//papelatt
+@Patch(':id/papel')
+  updatePapel(@Param('id') id: string, @Body('papel') papel: Papel) {
+    return this.usuariosService.updateRole(+id, papel);
+  }
 }

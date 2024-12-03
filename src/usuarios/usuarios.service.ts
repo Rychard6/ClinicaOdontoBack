@@ -3,6 +3,8 @@ import { PrismaService } from 'src/prisma.service';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { UpdateUsuarioDto } from './dto/update-usuario.dto';
+import { Papel, Usuario } from '@prisma/client';
 
 @Injectable()
 export class UsuariosService {
@@ -90,4 +92,47 @@ export class UsuariosService {
       user,
     };
   }
-}
+
+  //update
+  async update(id: number, updateUsuarioDto: UpdateUsuarioDto) {
+    if (isNaN(id)) {
+      throw new BadRequestException('ID inválido.');
+    }
+  
+    // Verifica se o usuário existe
+    const user = await this.prisma.usuario.findUnique({ where: { id } });
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado.');
+    }
+  
+    // Atualiza o usuário
+    const updatedUser = await this.prisma.usuario.update({
+      where: { id },
+      data: {
+        ...updateUsuarioDto,
+      },
+    });
+  
+    return updatedUser;
+  }
+  
+  async findClientes(): Promise<Usuario[]> {
+    return this.prisma.usuario.findMany({
+      where: { papel: 'CLIENTE' },
+    });
+  }
+
+  async updateRole(id: number, papel: Papel): Promise<Usuario> {
+    return this.prisma.usuario.update({
+      where: { id },
+      data: { papel },
+    });
+  }
+
+  async remove(id: number): Promise<void> {
+    await this.prisma.usuario.delete({
+      where: { id },
+    });
+  }
+  
+} 
