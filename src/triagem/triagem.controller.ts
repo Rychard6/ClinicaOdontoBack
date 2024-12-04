@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Param, Delete, Patch } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Patch, Put } from '@nestjs/common';
 import { TriagemService } from './triagem.service';
 import { CreateTriagemDto } from './dto/create-triagem.dto';
 import { UpdateTriagemDto } from './dto/update-triagem.dto';
+import { Triagem as TriagemModel } from '@prisma/client';
 
 @Controller('triagem')
 export class TriagemController {
@@ -28,8 +29,9 @@ export class TriagemController {
     return this.triagemService.remove(+id);
   }
 
-  @Patch(':id')
-update(@Param('id') id: string, @Body() updateTriagemDto: UpdateTriagemDto) {
-  return this.triagemService.update(+id, updateTriagemDto);
-}
+  @Put(':id')
+  update(@Param('id') id: number, @Body() updateTriagemDto: UpdateTriagemDto): Promise<TriagemModel> {
+    return this.triagemService.update(Number(id), updateTriagemDto);
+  }
+
 }
